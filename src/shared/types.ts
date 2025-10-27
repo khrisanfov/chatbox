@@ -177,6 +177,7 @@ export type SessionSettings = Partial<{
   provider: ModelProvider
   modelId: string
   maxContextMessageCount: number
+  useSystemPrompt: boolean,
   temperature: number
   topP: number
   maxTokens?: number

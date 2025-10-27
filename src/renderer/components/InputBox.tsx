@@ -47,6 +47,9 @@ import ModelSelector from './ModelSelectorNew'
 import MCPMenu from './mcp/MCPMenu'
 import { Keys } from './Shortcut'
 
+// For Custom Code
+import { getSession, saveSession } from '@/stores/sessionStorageMutations'
+
 export type InputBoxPayload = {
   input: string
   pictureKeys?: string[]
@@ -233,11 +236,59 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
 
         await onSubmit?.(params)
         trackingEvent('send_message', { event_category: 'user' })
+        await delay(100)
+        increaseMaxContextMessageCount()
       } catch (e) {
         console.error('Error submitting message:', e)
         toastActions.add((e as Error)?.message || t('An error occurred while sending the message.'))
       }
     }
+    const updateCustomSessionParameters = () => {
+      if (sessionId !== undefined) {
+        let session = getSession(sessionId)
+
+        if (session !== null && session.settings !== undefined && session.settings !== null) {
+          let maxContextMessageCount = document.getElementById('maxContextMessageCount') as HTMLInputElement
+          let useSystemPrompt = document.getElementById('useSystemPrompt') as HTMLInputElement
+
+          maxContextMessageCount.value = session.settings.maxContextMessageCount ? session.settings.maxContextMessageCount.toString() : "0"
+          useSystemPrompt.checked = !!session.settings.useSystemPrompt
+        }
+      }
+    }
+
+    const increaseMaxContextMessageCount = () => {
+      let maxContextMessageCount = document.getElementById("maxContextMessageCount") as HTMLInputElement
+      const currentValue = parseInt(maxContextMessageCount.value)
+      if (currentValue > 0) {
+        maxContextMessageCount.value = (currentValue + 1).toString()
+        updateSession()
+      }
+    }
+
+    const updateSession = () => {
+      if (sessionId !== undefined) {
+        let session = getSession(sessionId)
+
+        if (session !== null && session.settings !== undefined) {
+          let maxContextMessageCount = document.getElementById("maxContextMessageCount") as HTMLInputElement
+          let useSystemPrompt = document.getElementById("useSystemPrompt") as HTMLInputElement
+
+          session.settings.maxContextMessageCount = parseInt(maxContextMessageCount.value)
+          session.settings.useSystemPrompt = useSystemPrompt.checked
+
+          saveSession(session)
+        }
+      }
+    }
+
+    const [isPageLoaded, setIsPageLoaded] = useState(false);
+    useEffect(() => {
+      if (!isPageLoaded) {
+        updateCustomSessionParameters()
+        setIsPageLoaded(true)
+      }
+    }, [isPageLoaded])
 
     const onMessageInput = useCallback(
       (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -651,6 +702,12 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
               <IconVocabulary />
             </ActionIcon> */}
             </Flex>
+
+            <div>
+              Use history <input id="maxContextMessageCount" onChange={updateSession} type="number" min="0" max="999" />
+              &nbsp;
+              Use system prompt <input id="useSystemPrompt" onChange={updateSession} type="checkbox" min="0" max="999" />
+            </div>
 
             <Flex className="sm:!hidden" gap="xs">
               {sessionType !== 'picture' ? (

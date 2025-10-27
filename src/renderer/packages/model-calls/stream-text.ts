@@ -127,15 +127,16 @@ export async function streamText(
   const kbNotSupported = knowledgeBase && !model.isSupportToolUse('knowledge-base')
   const webNotSupported = webBrowsing && !model.isSupportToolUse('web-browsing')
 
-  params.messages = injectModelSystemPrompt(
-    model.modelId,
-    params.messages,
-    // 在系统提示中添加知识库名称，方便模型理解
-    knowledgeBase && !kbNotSupported
-      ? `Knowledge base is available to help you answer questions: ${knowledgeBase.name}`
-      : '',
-    model.isSupportSystemMessage() ? 'system' : 'user'
-  )
+  // Skip it
+  // params.messages = injectModelSystemPrompt(
+  //   model.modelId,
+  //   params.messages,
+  //   // 在系统提示中添加知识库名称，方便模型理解
+  //   knowledgeBase && !kbNotSupported
+  //     ? `Knowledge base is available to help you answer questions: ${knowledgeBase.name}`
+  //     : '',
+  //   model.isSupportSystemMessage() ? 'system' : 'user'
+  // )
 
   if (!model.isSupportSystemMessage()) {
     params.messages = params.messages.map((m) => ({ ...m, role: m.role === 'system' ? 'user' : m.role }))

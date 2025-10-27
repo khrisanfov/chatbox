@@ -1108,87 +1108,30 @@ export function clearConversationList(keepNum: number) {
  */
 async function genMessageContext(settings: Settings, msgs: Message[]) {
   const {
-    // openaiMaxContextTokens,
+    useSystemPrompt,
     maxContextMessageCount,
   } = settings
-  if (msgs.length === 0) {
-    throw new Error('No messages to replay')
-  }
+
   if (maxContextMessageCount === undefined) {
     throw new Error('maxContextMessageCount is not set')
+  } else {
+    console.log("maxContextMessageCount", maxContextMessageCount)
   }
-  const head = msgs[0].role === 'system' ? msgs[0] : undefined
-  if (head) {
-    msgs = msgs.slice(1)
-  }
-  let _totalLen = head ? estimateTokensFromMessages([head]) : 0
-  let prompts: Message[] = []
-  for (let i = msgs.length - 1; i >= 0; i--) {
-    let msg = msgs[i]
-    // 跳过错误消息
-    if (msg.error || msg.errorCode) {
-      continue
-    }
-    const size = estimateTokensFromMessages([msg]) + 20 // 20 作为预估的误差补偿
-    // 只有 OpenAI 才支持上下文 tokens 数量限制
-    if (settings.provider === 'openai') {
-      // if (size + totalLen > openaiMaxContextTokens) {
-      //     break
-      // }
-    }
-    if (
-      maxContextMessageCount < Number.MAX_SAFE_INTEGER &&
-      prompts.length >= maxContextMessageCount + 1 // +1是为了保留用户最后一条输入消息
-    ) {
-      break
-    }
 
-    // 如果消息中包含本地文件（消息中携带有本地文件的storageKey），则将文件内容也作为 prompt 的一部分
-    if (msg.files && msg.files.length > 0) {
-      for (const [fileIndex, file] of msg.files.entries()) {
-        if (file.storageKey) {
-          msg = cloneMessage(msg) // 复制一份消息，避免修改原始消息
-          const content = await storage.getBlob(file.storageKey).catch(() => '')
-          if (content) {
-            let attachment = `\n\n<ATTACHMENT_FILE>\n`
-            attachment += `<FILE_INDEX>File ${fileIndex + 1}</FILE_INDEX>\n`
-            attachment += `<FILE_NAME>${file.name}</FILE_NAME>\n`
-            attachment += '<FILE_CONTENT>\n'
-            attachment += `${content}\n`
-            attachment += '</FILE_CONTENT>\n'
-            attachment += `</ATTACHMENT_FILE>\n`
-            msg = mergeMessages(msg, createMessage(msg.role, attachment))
-          }
-        }
-      }
-    }
-    // 如果消息中包含本地链接（消息中携带有本地链接的storageKey），则将链接内容也作为 prompt 的一部分
-    if (msg.links && msg.links.length > 0) {
-      for (const [linkIndex, link] of msg.links.entries()) {
-        if (link.storageKey) {
-          msg = cloneMessage(msg) // 复制一份消息，避免修改原始消息
-          const content = await storage.getBlob(link.storageKey).catch(() => '')
-          if (content) {
-            let attachment = `\n\n<ATTACHMENT_LINK>\n`
-            attachment += `<LINK_INDEX>${linkIndex + 1}</LINK_INDEX>\n`
-            attachment += `<LINK_URL>${link.url}</LINK_URL>\n`
-            attachment += `<LINK_CONTENT>\n`
-            attachment += `${content}\n`
-            attachment += '</LINK_CONTENT>\n'
-            attachment += `</ATTACHMENT_LINK>\n`
-            msg = mergeMessages(msg, createMessage(msg.role, attachment))
-          }
-        }
-      }
-    }
+  let prompts_new: Message[] = []
 
-    prompts = [msg, ...prompts]
-    _totalLen += size
+  if (msgs[0].role === 'system' && useSystemPrompt) {
+    console.log("ИСПОЛЬЗУЕТСЯ СИСТЕМНЫЙ ПРОМПТ")
+    prompts_new = [msgs[0], ...msgs.slice(-2 * maxContextMessageCount - 1)]
+  } else {
+    prompts_new = msgs.slice(-2 * maxContextMessageCount - 1)
   }
-  if (head) {
-    prompts = [head, ...prompts]
-  }
-  return prompts
+
+  console.log("################################################")
+  console.log(prompts_new)
+  console.log("################################################")
+
+  return prompts_new
 }
 
 export function initEmptyChatSession(): Omit<Session, 'id'> {

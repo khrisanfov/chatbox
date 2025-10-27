@@ -46,9 +46,9 @@ export default function Header() {
 
     // 触发名称生成（在 sessionActions 中进行去重和延迟处理）
     if (currentSession.name === 'Untitled') {
-      sessionActions.scheduleGenerateNameAndThreadName(currentSession.id)
+      // sessionActions.scheduleGenerateNameAndThreadName(currentSession.id) // Skip it
     } else if (!currentSession.threadName) {
-      sessionActions.scheduleGenerateThreadName(currentSession.id)
+      // sessionActions.scheduleGenerateThreadName(currentSession.id) // Skip it
     }
   }, [currentSession])
 
