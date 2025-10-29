@@ -243,7 +243,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         toastActions.add((e as Error)?.message || t('An error occurred while sending the message.'))
       }
     }
-    const updateCustomSessionParameters = () => {
+    const initCustomSessionParameters = () => {
       if (sessionId !== undefined) {
         let session = getSession(sessionId)
 
@@ -251,8 +251,10 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           let maxContextMessageCount = document.getElementById('maxContextMessageCount') as HTMLInputElement
           let useSystemPrompt = document.getElementById('useSystemPrompt') as HTMLInputElement
 
-          maxContextMessageCount.value = session.settings.maxContextMessageCount ? session.settings.maxContextMessageCount.toString() : "0"
+          maxContextMessageCount.value = "0"
           useSystemPrompt.checked = !!session.settings.useSystemPrompt
+
+          updateSession()
         }
       }
     }
@@ -285,7 +287,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     const [isPageLoaded, setIsPageLoaded] = useState(false);
     useEffect(() => {
       if (!isPageLoaded) {
-        updateCustomSessionParameters()
+        initCustomSessionParameters()
         setIsPageLoaded(true)
       }
     }, [isPageLoaded])
