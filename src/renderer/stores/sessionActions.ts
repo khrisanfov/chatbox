@@ -1114,22 +1114,15 @@ async function genMessageContext(settings: Settings, msgs: Message[]) {
 
   if (maxContextMessageCount === undefined) {
     throw new Error('maxContextMessageCount is not set')
-  } else {
-    console.log("maxContextMessageCount", maxContextMessageCount)
   }
 
   let prompts_new: Message[] = []
 
   if (msgs[0].role === 'system' && useSystemPrompt) {
-    console.log("ИСПОЛЬЗУЕТСЯ СИСТЕМНЫЙ ПРОМПТ")
     prompts_new = [msgs[0], ...msgs.slice(-2 * maxContextMessageCount - 1)]
   } else {
     prompts_new = msgs.slice(-2 * maxContextMessageCount - 1)
   }
-
-  console.log("################################################")
-  console.log(prompts_new)
-  console.log("################################################")
 
   return prompts_new
 }
